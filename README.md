@@ -5,6 +5,10 @@
 </p>
 
 <p align="center">
+  <img src="screenshot/rox-filer2-qt.png" alt="Rox-Filer2-QT" width="180">
+</p>
+
+<p align="center">
   <strong>A modern Qt6 file manager built on the ROX-Filer philosophy.</strong>
 </p>
 

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="screenshot/rox-filer2-qt.png" alt="Rox-Filer2-QT" width="180">
+  <img src="screenshot/rox-filer2-qt.png" alt="Rox-Filer2-QT" width="640">
 </p>
 
 <p align="center">

@@ -1,0 +1,73 @@
+#!/bin/sh
+# ROX-Filer2-QT: launch a separate graphical root process with Polkit.
+# The privileged helper only starts /usr/bin/rox-filer2-qt.
+set -eu
+HELPER=/usr/lib/rox-filer2-qt/rox-qt-root-launcher
+if [ ! -x "$HELPER" ]; then
+    echo "ROX-Filer2-QT root helper is missing: $HELPER" >&2
+    exit 127
+fi
+if [ "$#" -gt 1 ]; then
+    echo "Usage: roxfiler-qt-root [DIRECTORY]" >&2
+    exit 2
+fi
+if [ "$(id -u)" -eq 0 ]; then
+    exec "$HELPER" "$@"
+fi
+if ! command -v pkexec >/dev/null 2>&1; then
+    echo "pkexec is required for ROX-Filer2-QT root mode." >&2
+    exit 127
+fi
+
+# pkexec scrubs the environment, so the elevated Qt would lose the session's
+# theme.  Forward only the theme-related variables of THIS session; the helper
+# re-validates every one of them against its own fixed whitelist.
+dir=${1-}
+# Qt itself supplies its resolved palette: copying kdeglobals alone does not
+# reproduce colours when SonicDE uses qt6ct or a user-installed colour scheme.
+# This command runs ONLY as the calling user, never with privileges.
+snapshot=""
+if [ -x /usr/bin/rox-filer2-qt ]; then
+    snapshot=$(/usr/bin/rox-filer2-qt --theme-snapshot 2>/dev/null) || snapshot=""
+fi
+palette=""
+snapshot_style=""
+snapshot_icon=""
+snapshot_font=""
+case "$snapshot" in
+    PALETTE=*)
+        palette=$(printf '%s\n' "$snapshot" | sed -n '1s/^PALETTE=//p')
+        snapshot_style=$(printf '%s\n' "$snapshot" | sed -n '2s/^STYLE=//p')
+        snapshot_icon=$(printf '%s\n' "$snapshot" | sed -n '3s/^ICON=//p')
+        snapshot_font=$(printf '%s\n' "$snapshot" | sed -n '4s/^FONT=//p')
+        ;;
+esac
+set --
+for name in LANG LANGUAGE LC_MESSAGES LC_ALL \
+            QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE QT_QUICK_CONTROLS_STYLE \
+            XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP DESKTOP_SESSION \
+            KDE_FULL_SESSION KDE_SESSION_VERSION QT_SCALE_FACTOR QT_FONT_DPI \
+            QT_AUTO_SCREEN_SCALE_FACTOR QT_ENABLE_HIGHDPI_SCALING \
+            QT_PLUGIN_PATH XDG_DATA_DIRS XDG_CONFIG_DIRS; do
+    eval "value=\${$name-}"
+    if [ -n "$value" ]; then
+        set -- "$@" "--env=$name=$value"
+    fi
+done
+if [ -n "$palette" ]; then
+    set -- "$@" "--env=ROX_QT_THEME_PALETTE=$palette"
+fi
+# A name, not a search path; the root launcher validates before applying it.
+if [ -z "${QT_STYLE_OVERRIDE-}" ] && [ -n "$snapshot_style" ]; then
+    set -- "$@" "--env=QT_STYLE_OVERRIDE=$snapshot_style"
+fi
+if [ -n "$snapshot_icon" ]; then
+    set -- "$@" "--env=ROX_QT_THEME_ICON=$snapshot_icon"
+fi
+if [ -n "$snapshot_font" ]; then
+    set -- "$@" "--env=ROX_QT_THEME_FONT=$snapshot_font"
+fi
+if [ -n "$dir" ]; then
+    set -- "$@" -- "$dir"
+fi
+exec pkexec "$HELPER" "$@"

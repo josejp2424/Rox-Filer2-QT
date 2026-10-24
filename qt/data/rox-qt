@@ -1,0 +1,3 @@
+#!/bin/sh
+# Standalone Qt command, does not overwrite GTK ROX.
+exec /usr/bin/rox-filer2-qt "$@"

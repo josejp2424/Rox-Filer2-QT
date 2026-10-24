@@ -1,0 +1,93 @@
+#!/bin/sh
+# Optional user-session graphical Polkit agent for Essora SonicDE.
+# Never runs a filesystem operation and never requests root privileges.
+set -eu
+
+find_agent() {
+    for candidate in \
+        /usr/lib/polkit-kde-authentication-agent-1 \
+        /usr/libexec/polkit-kde-authentication-agent-1 \
+        /usr/lib/x86_64-linux-gnu/libexec/polkit-kde-authentication-agent-1 \
+        /opt/essora/sonicde/libexec/polkit-kde-authentication-agent-1 \
+        /opt/essora/sonicde/lib/polkit-kde-authentication-agent-1 \
+        /usr/lib/lxqt-policykit/lxqt-policykit-agent \
+        /usr/libexec/lxqt-policykit-agent \
+        /usr/libexec/mate-polkit \
+        /usr/lib/mate-polkit/polkit-mate-authentication-agent-1 \
+        /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
+        /usr/bin/lxpolkit; do
+        if [ -x "$candidate" ]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    for name in polkit-kde-authentication-agent-1 lxqt-policykit-agent \
+                polkit-mate-authentication-agent-1 \
+                polkit-gnome-authentication-agent-1 lxpolkit; do
+        if command -v "$name" >/dev/null 2>&1; then
+            command -v "$name"
+            return 0
+        fi
+    done
+    return 1
+}
+
+already_running() {
+    command -v pgrep >/dev/null 2>&1 &&
+        pgrep -u "$(id -u)" -f '[/]polkit-kde-authentication-agent-1|[/]lxqt-policykit-agent|[/]polkit-mate-authentication-agent-1|[/]polkit-gnome-authentication-agent-1|[/]lxpolkit' >/dev/null 2>&1
+}
+
+case "${1:-status}" in
+    status)
+        printf 'User: %s\nDISPLAY: %s\nDBUS_SESSION_BUS_ADDRESS: %s\n' \
+            "$(id -un)" "${DISPLAY:-<not set>}" "${DBUS_SESSION_BUS_ADDRESS:+set}"
+        if already_running; then
+            echo 'Graphical Polkit agent: running'
+        else
+            echo 'Graphical Polkit agent: not found among known agents'
+        fi
+        if agent=$(find_agent); then
+            echo "Available agent: $agent"
+        else
+            echo 'No known agent binary found. Suggested package: polkit-kde-agent-1'
+        fi
+        for program in pkexec udisksctl; do
+            if command -v "$program" >/dev/null 2>&1; then
+                echo "$program: $(command -v "$program")"
+            else
+                echo "$program: missing"
+            fi
+        done
+        ;;
+    start)
+        [ "$(id -u)" -ne 0 ] || { echo 'Start agent as the logged-in user, not root.' >&2; exit 1; }
+        [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] || exit 0
+        if already_running; then exit 0; fi
+        if ! agent=$(find_agent); then
+            echo 'No graphical Polkit agent installed (e.g. polkit-kde-agent-1).' >&2
+            exit 1
+        fi
+        # Execute in this user's session. The desktop's D-Bus and X11/Wayland
+        # variables remain unmodified; no root login or xhost commands.
+        "$agent" &
+        ;;
+    enable-autostart)
+        [ "$(id -u)" -ne 0 ] || { echo 'Do not enable as root.' >&2; exit 1; }
+        mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
+        cat > "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/rox-qt-polkit-agent.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Graphical authentication agent for SonicDE
+Comment=Start the installed graphical Polkit agent if none is already running
+Exec=/usr/bin/qt-polkit-session start
+TryExec=/usr/bin/qt-polkit-session
+Terminal=false
+X-GNOME-Autostart-enabled=true
+DESKTOP
+        echo 'Enabled for subsequent logins. Current session: run .../qt-polkit-session start'
+        ;;
+    *)
+        echo 'Usage: qt-polkit-session [status|start|enable-autostart]' >&2
+        exit 2
+        ;;
+esac

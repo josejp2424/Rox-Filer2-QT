@@ -1,0 +1,23 @@
+[Desktop Entry]
+Type=Application
+Name=ROX-Filer2-QT Drive Icons
+Name[es]=Iconos de unidades de ROX-Filer2-QT
+Name[ca]=Icones d'unitats de ROX-Filer2-QT
+Name[de]=ROX-Filer2-QT Laufwerkssymbole
+Name[fr]=Icônes de disques ROX-Filer2-QT
+Name[it]=Icone unità ROX-Filer2-QT
+Name[pt]=Ícones de unidades ROX-Filer2-QT
+Name[hu]=ROX-Filer2-QT meghajtóikonok
+Name[ja]=ROX-Filer2-QT ドライブアイコン
+Name[ru]=Значки дисков ROX-Filer2-QT
+Name[ar]=أيقونات أقراص ROX-Filer2-QT
+Name[zh]=ROX-Filer2-QT 磁盘图标
+Comment=Optional desktop drive icons for SonicDE X11; disabled until enabled in ROX preferences
+Comment[es]=Iconos de discos opcionales para SonicDE X11; activalos desde Preferencias de ROX
+Exec=/usr/bin/rox-qt-drives
+TryExec=/usr/bin/rox-qt-drives
+Icon=drive-harddisk
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Categories=Utility;FileManager;Qt;

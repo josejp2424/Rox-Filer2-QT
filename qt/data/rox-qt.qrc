@@ -1,0 +1,17 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <!-- Resources owned by this Qt-only source distribution. -->
+  <qresource prefix="/rox-qt">
+    <file alias="rox-filer2-qt.png">rox-filer2-qt.png</file>
+    <file alias="rox-filer2-qt-root.png">rox-filer2-qt-root.png</file>
+    <file alias="rox-filer2-qt.svg">rox-filer2-qt.svg</file>
+    <file alias="rox-filer2-qt-root.svg">rox-filer2-qt-root.svg</file>
+    <file alias="mime/application-pet.svg">../resources/mime/application-pet.svg</file>
+    <file alias="mime/application-x-sfs.svg">../resources/mime/application-x-sfs.svg</file>
+    <file alias="mime/application-x-squashfs-image.svg">../resources/mime/application-x-squashfs-image.svg</file>
+    <file alias="templates/Script">../resources/templates/Script</file>
+    <file alias="templates/Text.txt">../resources/templates/Text.txt</file>
+    <file alias="templates/WebPage.html">../resources/templates/WebPage.html</file>
+    <file alias="templates/python3.py">../resources/templates/python3.py</file>
+  </qresource>
+</RCC>
